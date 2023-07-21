@@ -1,7 +1,7 @@
 import express from 'express';
+import { config } from './config';
 
 const app = express();
-const port = process.env.PORT || '3000';
 
 app.use(express.json());
 
@@ -9,6 +9,6 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.listen(port, () => {
-  return console.log(`Ride-sharing service listening at http://localhost:${port}`);
+app.listen(config.port, () => {
+  return console.log(`Ride-sharing service listening at http://localhost:${config.port}`);
 });

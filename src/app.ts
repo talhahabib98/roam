@@ -1,5 +1,6 @@
 import express from 'express';
 import { config } from './config';
+import { logger } from './lib/logger';
 
 const app = express();
 
@@ -10,5 +11,5 @@ app.get('/health', (_req, res) => {
 });
 
 app.listen(config.port, () => {
-  return console.log(`Ride-sharing service listening at http://localhost:${config.port}`);
+  logger.info(`Ride-sharing service listening at http://localhost:${config.port}`);
 });

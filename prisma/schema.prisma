@@ -20,4 +20,25 @@ model User {
   role         Role
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  driver       Driver?
+}
+
+enum DriverStatus {
+  OFFLINE
+  ONLINE
+  BUSY
+}
+
+model Driver {
+  id                String       @id @default(uuid())
+  userId            String       @unique
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleModel      String
+  vehiclePlate      String
+  status            DriverStatus @default(OFFLINE)
+  latitude          Float?
+  longitude         Float?
+  locationUpdatedAt DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 }

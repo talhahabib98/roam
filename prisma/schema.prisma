@@ -21,6 +21,7 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   driver       Driver?
+  rides        Ride[]
 }
 
 enum DriverStatus {
@@ -41,4 +42,37 @@ model Driver {
   locationUpdatedAt DateTime?
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
+  rides             Ride[]
+}
+
+enum RideStatus {
+  REQUESTED
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Ride {
+  id          String     @id @default(uuid())
+  riderId     String
+  rider       User       @relation(fields: [riderId], references: [id])
+  driverId    String?
+  driver      Driver?    @relation(fields: [driverId], references: [id])
+  status      RideStatus @default(REQUESTED)
+  pickupLat   Float
+  pickupLng   Float
+  dropoffLat  Float
+  dropoffLng  Float
+  distanceKm  Float
+  fareCents   Int
+  requestedAt DateTime   @default(now())
+  acceptedAt  DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+  updatedAt   DateTime   @updatedAt
+
+  @@index([riderId])
+  @@index([driverId])
 }

@@ -31,3 +31,10 @@ export function authenticate(req: Request, _res: Response, next: NextFunction) {
     next(err);
   }
 }
+
+export function currentUser(req: Request): AuthUser {
+  if (!req.user) {
+    throw HttpError.unauthorized();
+  }
+  return req.user;
+}

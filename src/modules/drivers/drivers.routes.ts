@@ -3,8 +3,8 @@ import { asyncHandler } from '../../lib/asyncHandler';
 import { authenticate, currentUser } from '../../middleware/authenticate';
 import { requireRole } from '../../middleware/requireRole';
 import { validate } from '../../middleware/validate';
-import { updateStatusSchema } from './drivers.schema';
-import { getDriverByUserId, updateDriverStatus } from './drivers.service';
+import { updateLocationSchema, updateStatusSchema } from './drivers.schema';
+import { getDriverByUserId, updateDriverLocation, updateDriverStatus } from './drivers.service';
 
 export const driversRouter = Router();
 
@@ -23,6 +23,15 @@ driversRouter.put(
   validate({ body: updateStatusSchema }),
   asyncHandler(async (req, res) => {
     const driver = await updateDriverStatus(currentUser(req).id, req.body);
+    res.json({ driver });
+  }),
+);
+
+driversRouter.put(
+  '/me/location',
+  validate({ body: updateLocationSchema }),
+  asyncHandler(async (req, res) => {
+    const driver = await updateDriverLocation(currentUser(req).id, req.body);
     res.json({ driver });
   }),
 );

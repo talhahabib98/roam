@@ -16,4 +16,9 @@ export const config = {
   databaseUrl: required('DATABASE_URL'),
   jwtSecret: required('JWT_SECRET'),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1d',
+  fare: {
+    baseCents: Number(process.env.FARE_BASE_CENTS || 250),
+    perKmCents: Number(process.env.FARE_PER_KM_CENTS || 120),
+    minimumCents: Number(process.env.FARE_MINIMUM_CENTS || 500),
+  },
 };

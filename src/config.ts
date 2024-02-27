@@ -21,4 +21,5 @@ export const config = {
     perKmCents: Number(process.env.FARE_PER_KM_CENTS || 120),
     minimumCents: Number(process.env.FARE_MINIMUM_CENTS || 500),
   },
+  matchRadiusKm: Number(process.env.MATCH_RADIUS_KM || 10),
 };

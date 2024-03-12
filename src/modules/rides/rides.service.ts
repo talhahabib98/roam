@@ -1,4 +1,5 @@
 import { RideStatus } from '@prisma/client';
+import { AuthUser } from '../../middleware/authenticate';
 import { HttpError } from '../../lib/errors';
 import { calculateFareCents } from '../../lib/fare';
 import { distanceKm } from '../../lib/geo';
@@ -54,4 +55,23 @@ export async function createRide(riderId: string, input: RideRequestInput) {
       },
     });
   });
+}
+
+export async function getRideForUser(rideId: string, user: AuthUser) {
+  const ride = await prisma.ride.findUnique({
+    where: { id: rideId },
+    include: { driver: { select: { userId: true } } },
+  });
+  if (!ride) {
+    throw HttpError.notFound('Ride not found');
+  }
+
+  const isRider = ride.riderId === user.id;
+  const isDriver = ride.driver?.userId === user.id;
+  if (!isRider && !isDriver) {
+    throw HttpError.forbidden();
+  }
+
+  const { driver, ...rest } = ride;
+  return rest;
 }

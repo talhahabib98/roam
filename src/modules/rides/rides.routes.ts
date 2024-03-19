@@ -4,7 +4,7 @@ import { authenticate, currentUser } from '../../middleware/authenticate';
 import { requireRole } from '../../middleware/requireRole';
 import { validate } from '../../middleware/validate';
 import { rideIdParamsSchema, rideRequestSchema } from './rides.schema';
-import { createRide, estimateRide, getRideForUser } from './rides.service';
+import { acceptRide, createRide, estimateRide, getRideForUser } from './rides.service';
 
 export const ridesRouter = Router();
 
@@ -34,6 +34,16 @@ ridesRouter.get(
   validate({ params: rideIdParamsSchema }),
   asyncHandler(async (req, res) => {
     const ride = await getRideForUser(req.params.id, currentUser(req));
+    res.json({ ride });
+  }),
+);
+
+ridesRouter.post(
+  '/:id/accept',
+  requireRole('DRIVER'),
+  validate({ params: rideIdParamsSchema }),
+  asyncHandler(async (req, res) => {
+    const ride = await acceptRide(req.params.id, currentUser(req).id);
     res.json({ ride });
   }),
 );

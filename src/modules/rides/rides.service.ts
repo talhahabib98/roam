@@ -75,3 +75,44 @@ export async function getRideForUser(rideId: string, user: AuthUser) {
   const { driver, ...rest } = ride;
   return rest;
 }
+
+type TimestampField = 'acceptedAt' | 'startedAt' | 'completedAt' | 'cancelledAt';
+
+async function getAssignedRide(rideId: string, driverUserId: string) {
+  const ride = await prisma.ride.findUnique({
+    where: { id: rideId },
+    include: { driver: { select: { userId: true } } },
+  });
+  if (!ride) {
+    throw HttpError.notFound('Ride not found');
+  }
+  if (ride.driver?.userId !== driverUserId) {
+    throw HttpError.forbidden('This ride is not assigned to you');
+  }
+  return ride;
+}
+
+async function transition(
+  rideId: string,
+  allowedFrom: RideStatus[],
+  to: RideStatus,
+  timestamp: TimestampField,
+) {
+  // The status filter makes the update atomic, so concurrent requests cannot both win
+  const updated = await prisma.ride.updateMany({
+    where: { id: rideId, status: { in: allowedFrom } },
+    data: { status: to, [timestamp]: new Date() },
+  });
+  if (updated.count === 0) {
+    throw HttpError.conflict(
+      `Ride cannot be moved to ${to} from its current state`,
+      'INVALID_RIDE_STATE',
+    );
+  }
+  return prisma.ride.findUniqueOrThrow({ where: { id: rideId } });
+}
+
+export async function acceptRide(rideId: string, driverUserId: string) {
+  await getAssignedRide(rideId, driverUserId);
+  return transition(rideId, ['REQUESTED'], 'ACCEPTED', 'acceptedAt');
+}

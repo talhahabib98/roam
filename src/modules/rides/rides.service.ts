@@ -116,3 +116,8 @@ export async function acceptRide(rideId: string, driverUserId: string) {
   await getAssignedRide(rideId, driverUserId);
   return transition(rideId, ['REQUESTED'], 'ACCEPTED', 'acceptedAt');
 }
+
+export async function startRide(rideId: string, driverUserId: string) {
+  await getAssignedRide(rideId, driverUserId);
+  return transition(rideId, ['ACCEPTED'], 'IN_PROGRESS', 'startedAt');
+}

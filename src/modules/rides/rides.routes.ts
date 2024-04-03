@@ -4,7 +4,14 @@ import { authenticate, currentUser } from '../../middleware/authenticate';
 import { requireRole } from '../../middleware/requireRole';
 import { validate } from '../../middleware/validate';
 import { rideIdParamsSchema, rideRequestSchema } from './rides.schema';
-import { acceptRide, createRide, estimateRide, getRideForUser, startRide } from './rides.service';
+import {
+  acceptRide,
+  completeRide,
+  createRide,
+  estimateRide,
+  getRideForUser,
+  startRide,
+} from './rides.service';
 
 export const ridesRouter = Router();
 
@@ -54,6 +61,16 @@ ridesRouter.post(
   validate({ params: rideIdParamsSchema }),
   asyncHandler(async (req, res) => {
     const ride = await startRide(req.params.id, currentUser(req).id);
+    res.json({ ride });
+  }),
+);
+
+ridesRouter.post(
+  '/:id/complete',
+  requireRole('DRIVER'),
+  validate({ params: rideIdParamsSchema }),
+  asyncHandler(async (req, res) => {
+    const ride = await completeRide(req.params.id, currentUser(req).id);
     res.json({ ride });
   }),
 );

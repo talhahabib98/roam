@@ -97,19 +97,27 @@ async function transition(
   allowedFrom: RideStatus[],
   to: RideStatus,
   timestamp: TimestampField,
+  options: { releaseDriver?: boolean } = {},
 ) {
-  // The status filter makes the update atomic, so concurrent requests cannot both win
-  const updated = await prisma.ride.updateMany({
-    where: { id: rideId, status: { in: allowedFrom } },
-    data: { status: to, [timestamp]: new Date() },
+  return prisma.$transaction(async (tx) => {
+    // The status filter makes the update atomic, so concurrent requests cannot both win
+    const updated = await tx.ride.updateMany({
+      where: { id: rideId, status: { in: allowedFrom } },
+      data: { status: to, [timestamp]: new Date() },
+    });
+    if (updated.count === 0) {
+      throw HttpError.conflict(
+        `Ride cannot be moved to ${to} from its current state`,
+        'INVALID_RIDE_STATE',
+      );
+    }
+
+    const ride = await tx.ride.findUniqueOrThrow({ where: { id: rideId } });
+    if (options.releaseDriver && ride.driverId) {
+      await tx.driver.update({ where: { id: ride.driverId }, data: { status: 'ONLINE' } });
+    }
+    return ride;
   });
-  if (updated.count === 0) {
-    throw HttpError.conflict(
-      `Ride cannot be moved to ${to} from its current state`,
-      'INVALID_RIDE_STATE',
-    );
-  }
-  return prisma.ride.findUniqueOrThrow({ where: { id: rideId } });
 }
 
 export async function acceptRide(rideId: string, driverUserId: string) {
@@ -120,4 +128,9 @@ export async function acceptRide(rideId: string, driverUserId: string) {
 export async function startRide(rideId: string, driverUserId: string) {
   await getAssignedRide(rideId, driverUserId);
   return transition(rideId, ['ACCEPTED'], 'IN_PROGRESS', 'startedAt');
+}
+
+export async function completeRide(rideId: string, driverUserId: string) {
+  await getAssignedRide(rideId, driverUserId);
+  return transition(rideId, ['IN_PROGRESS'], 'COMPLETED', 'completedAt', { releaseDriver: true });
 }

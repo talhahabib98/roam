@@ -134,3 +134,11 @@ export async function completeRide(rideId: string, driverUserId: string) {
   await getAssignedRide(rideId, driverUserId);
   return transition(rideId, ['IN_PROGRESS'], 'COMPLETED', 'completedAt', { releaseDriver: true });
 }
+
+export async function cancelRide(rideId: string, user: AuthUser) {
+  // Only the rider or the assigned driver may cancel, and only before the trip starts
+  await getRideForUser(rideId, user);
+  return transition(rideId, ['REQUESTED', 'ACCEPTED'], 'CANCELLED', 'cancelledAt', {
+    releaseDriver: true,
+  });
+}

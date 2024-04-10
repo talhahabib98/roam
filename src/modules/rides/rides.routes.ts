@@ -6,6 +6,7 @@ import { validate } from '../../middleware/validate';
 import { rideIdParamsSchema, rideRequestSchema } from './rides.schema';
 import {
   acceptRide,
+  cancelRide,
   completeRide,
   createRide,
   estimateRide,
@@ -71,6 +72,15 @@ ridesRouter.post(
   validate({ params: rideIdParamsSchema }),
   asyncHandler(async (req, res) => {
     const ride = await completeRide(req.params.id, currentUser(req).id);
+    res.json({ ride });
+  }),
+);
+
+ridesRouter.post(
+  '/:id/cancel',
+  validate({ params: rideIdParamsSchema }),
+  asyncHandler(async (req, res) => {
+    const ride = await cancelRide(req.params.id, currentUser(req));
     res.json({ ride });
   }),
 );

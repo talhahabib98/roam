@@ -5,7 +5,7 @@ import { calculateFareCents } from '../../lib/fare';
 import { distanceKm } from '../../lib/geo';
 import { prisma } from '../../lib/prisma';
 import { findNearestAvailableDriver } from './matching';
-import { RideRequestInput } from './rides.schema';
+import { ListRidesQuery, RideRequestInput } from './rides.schema';
 
 const ACTIVE_STATUSES: RideStatus[] = ['REQUESTED', 'ACCEPTED', 'IN_PROGRESS'];
 
@@ -141,4 +141,23 @@ export async function cancelRide(rideId: string, user: AuthUser) {
   return transition(rideId, ['REQUESTED', 'ACCEPTED'], 'CANCELLED', 'cancelledAt', {
     releaseDriver: true,
   });
+}
+
+export async function listRides(user: AuthUser, query: ListRidesQuery) {
+  const where = {
+    ...(user.role === 'RIDER' ? { riderId: user.id } : { driver: { userId: user.id } }),
+    ...(query.status ? { status: query.status } : {}),
+  };
+
+  const [rides, total] = await Promise.all([
+    prisma.ride.findMany({
+      where,
+      orderBy: { requestedAt: 'desc' },
+      skip: (query.page - 1) * query.limit,
+      take: query.limit,
+    }),
+    prisma.ride.count({ where }),
+  ]);
+
+  return { rides, page: query.page, limit: query.limit, total };
 }

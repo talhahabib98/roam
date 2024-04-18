@@ -14,4 +14,11 @@ export const rideIdParamsSchema = z.object({
   id: z.string().uuid(),
 });
 
+export const listRidesQuerySchema = z.object({
+  status: z.enum(['REQUESTED', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  page: z.coerce.number().int().min(1).default(1),
+});
+
+export type ListRidesQuery = z.infer<typeof listRidesQuerySchema>;
 export type RideRequestInput = z.infer<typeof rideRequestSchema>;

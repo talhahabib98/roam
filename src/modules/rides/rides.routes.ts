@@ -3,7 +3,12 @@ import { asyncHandler } from '../../lib/asyncHandler';
 import { authenticate, currentUser } from '../../middleware/authenticate';
 import { requireRole } from '../../middleware/requireRole';
 import { validate } from '../../middleware/validate';
-import { rideIdParamsSchema, rideRequestSchema } from './rides.schema';
+import {
+  ListRidesQuery,
+  listRidesQuerySchema,
+  rideIdParamsSchema,
+  rideRequestSchema,
+} from './rides.schema';
 import {
   acceptRide,
   cancelRide,
@@ -11,6 +16,7 @@ import {
   createRide,
   estimateRide,
   getRideForUser,
+  listRides,
   startRide,
 } from './rides.service';
 
@@ -34,6 +40,15 @@ ridesRouter.post(
   asyncHandler(async (req, res) => {
     const ride = await createRide(currentUser(req).id, req.body);
     res.status(201).json({ ride });
+  }),
+);
+
+ridesRouter.get(
+  '/',
+  validate({ query: listRidesQuerySchema }),
+  asyncHandler(async (req, res) => {
+    const result = await listRides(currentUser(req), req.query as unknown as ListRidesQuery);
+    res.json(result);
   }),
 );
 

@@ -52,7 +52,7 @@ export async function loginUser(input: LoginInput): Promise<{ token: string; use
   }
 
   return {
-    token: signToken({ sub: user.id, role: user.role }),
+    token: await signToken({ sub: user.id, role: user.role }),
     user: toPublicUser(user),
   };
 }

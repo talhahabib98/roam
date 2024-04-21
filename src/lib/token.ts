@@ -1,5 +1,5 @@
 import { Role } from '@prisma/client';
-import jwt from 'jsonwebtoken';
+import { jwtVerify, SignJWT } from 'jose';
 import { config } from '../config';
 import { HttpError } from './errors';
 
@@ -8,17 +8,24 @@ export interface TokenPayload {
   role: Role;
 }
 
-export function signToken(payload: TokenPayload): string {
-  return jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+const secret = new TextEncoder().encode(config.jwtSecret);
+
+export function signToken(payload: TokenPayload): Promise<string> {
+  return new SignJWT({ role: payload.role })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(payload.sub)
+    .setIssuedAt()
+    .setExpirationTime(config.jwtExpiresIn)
+    .sign(secret);
 }
 
-export function verifyToken(token: string): TokenPayload {
+export async function verifyToken(token: string): Promise<TokenPayload> {
   try {
-    const decoded = jwt.verify(token, config.jwtSecret);
-    if (typeof decoded === 'string' || !decoded.sub || !decoded.role) {
+    const { payload } = await jwtVerify(token, secret, { algorithms: ['HS256'] });
+    if (!payload.sub || !payload.role) {
       throw HttpError.unauthorized('Invalid token');
     }
-    return { sub: decoded.sub, role: decoded.role as Role };
+    return { sub: payload.sub, role: payload.role as Role };
   } catch (err) {
     if (err instanceof HttpError) throw err;
     throw HttpError.unauthorized('Invalid or expired token');

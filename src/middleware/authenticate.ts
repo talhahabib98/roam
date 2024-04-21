@@ -17,14 +17,14 @@ declare global {
   }
 }
 
-export function authenticate(req: Request, _res: Response, next: NextFunction) {
+export async function authenticate(req: Request, _res: Response, next: NextFunction) {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
     return next(HttpError.unauthorized());
   }
 
   try {
-    const payload = verifyToken(header.slice('Bearer '.length));
+    const payload = await verifyToken(header.slice('Bearer '.length));
     req.user = { id: payload.sub, role: payload.role };
     next();
   } catch (err) {
